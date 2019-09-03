@@ -34,6 +34,7 @@ import chrome from '../../chrome';
 import { fromUser, toUser } from '../../parse_query';
 import { matchPairs } from '../lib/match_pairs';
 import { QueryLanguageSwitcher } from './language_switcher';
+import { WildCardHandler } from './wild_card_handler';
 import { SuggestionsComponent } from './typeahead/suggestions_component';
 
 import {
@@ -84,6 +85,7 @@ interface State {
   suggestions: AutocompleteSuggestion[];
   suggestionLimit: number;
   currentProps?: Props;
+  expensive:boolean;
 }
 
 export class QueryBarUI extends Component<Props, State> {
@@ -135,6 +137,7 @@ export class QueryBarUI extends Component<Props, State> {
     index: null,
     suggestions: [],
     suggestionLimit: 50,
+    expensive:false
   };
 
   public updateSuggestions = debounce(async () => {
@@ -313,6 +316,7 @@ export class QueryBarUI extends Component<Props, State> {
       isSuggestionsVisible: hasValue,
       index: null,
       suggestionLimit: 50,
+      expensive:false
     });
   };
 
@@ -399,6 +403,11 @@ export class QueryBarUI extends Component<Props, State> {
   };
 
   public onSubmit = (preventDefault?: () => void) => {
+    if(this.state.query.query.includes("*")){
+      this.setState({expensive:true})
+      return;
+    }
+   
     if (preventDefault) {
       preventDefault();
     }
@@ -461,6 +470,8 @@ export class QueryBarUI extends Component<Props, State> {
   }
 
   public render() {
+
+    const wildcardui = this.state.expensive;
     return (
       <EuiFlexGroup responsive={false} gutterSize="s">
         <EuiFlexItem>
@@ -481,7 +492,7 @@ export class QueryBarUI extends Component<Props, State> {
                       className="kuiLocalSearchAssistedInput__input"
                       placeholder={this.props.intl.formatMessage({
                         id: 'common.ui.queryBar.searchInputPlaceholder',
-                        defaultMessage: 'Search… (e.g. status:200 AND extension:PHP)',
+                        defaultMessage: 'Search… (e.g. status:200 AND extension:PHP)  ***Add a filter for wildcard searches ***',
                       })}
                       value={this.state.query.query}
                       onKeyDown={this.onKeyDown}
@@ -516,6 +527,9 @@ export class QueryBarUI extends Component<Props, State> {
                         language={this.state.query.language}
                         onSelectLanguage={this.onSelectLanguage}
                       />
+                    </div>
+                    <div className="kuiLocalSearchAssistedInput__wildcard">
+                    {<WildCardHandler wpopover={wildcardui} />}
                     </div>
                   </div>
                 </div>
